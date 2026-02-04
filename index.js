@@ -3,7 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Mon mini-serveur Heroku fonctionne !');
+  res.send('Hello Cloud ! Application déployée sur Render (PaaS)');
 });
 
 app.listen(PORT, () => {
