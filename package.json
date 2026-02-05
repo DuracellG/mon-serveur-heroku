@@ -1,7 +1,7 @@
 {
-  "name": "notes-etudiants",
-  "version": "1.0.0",
-  "description": "Application de gestion de notes",
+  "name": "gestion-etudiants-notes",
+  "version": "2.0.0",
+  "description": "Système complet de gestion des étudiants et notes",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
