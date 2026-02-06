@@ -657,6 +657,11 @@
         document.getElementById('etudiantForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Désactiver le bouton pendant le traitement
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Inscription en cours...';
+            
             const data = {
                 nom: document.getElementById('nom').value.trim(),
                 prenom: document.getElementById('prenom').value.trim(),
@@ -677,27 +682,54 @@
                 if (result.success) {
                     showAlert('✅ Étudiant inscrit avec succès !', 'success');
                     document.getElementById('etudiantForm').reset();
-                    await loadEtudiants(); // Attendre le rechargement
+                    
+                    // Recharger les données avec un petit délai
+                    setTimeout(async () => {
+                        await loadEtudiants();
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '➕ Inscrire l\'étudiant';
+                    }, 100);
                 } else {
                     showAlert('❌ ' + result.error, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '➕ Inscrire l\'étudiant';
                 }
             } catch (error) {
                 console.error('Erreur:', error);
                 showAlert('❌ Erreur lors de l\'inscription', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '➕ Inscrire l\'étudiant';
             }
         });
         
         async function loadEtudiants() {
+            const container = document.getElementById('etudiantsTable');
+            container.innerHTML = '<div class="loading">⏳ Chargement des étudiants...</div>';
+            
             try {
                 const response = await fetch('/api/etudiants');
+                
+                if (!response.ok) {
+                    throw new Error('Erreur serveur');
+                }
+                
                 const etudiants = await response.json();
                 
                 displayEtudiants(etudiants);
                 updateEtudiantsSelect(etudiants);
+                
+                console.log('✅ Étudiants chargés:', etudiants.length);
             } catch (error) {
-                console.error('Erreur:', error);
-                document.getElementById('etudiantsTable').innerHTML = 
-                    '<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erreur de chargement</div>';
+                console.error('❌ Erreur de chargement:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Erreur de chargement</p>
+                        <button class="btn btn-primary" onclick="loadEtudiants()" style="margin-top: 15px;">
+                            🔄 Réessayer
+                        </button>
+                    </div>
+                `;
             }
         }
         
@@ -810,6 +842,11 @@
         document.getElementById('noteForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Désactiver le bouton pendant le traitement
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enregistrement en cours...';
+            
             const data = {
                 etudiant_id: document.getElementById('note_etudiant').value,
                 matiere: document.getElementById('matiere').value.trim(),
@@ -829,21 +866,38 @@
                 if (result.success) {
                     showAlert('✅ Note enregistrée avec succès !', 'success');
                     document.getElementById('noteForm').reset();
-                    await loadNotes();
-                    await loadEtudiants();
+                    
+                    // Recharger les données
+                    setTimeout(async () => {
+                        await Promise.all([loadNotes(), loadEtudiants()]);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '💾 Enregistrer la note';
+                    }, 100);
+                } else {
+                    showAlert('❌ Erreur lors de l\'ajout', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '💾 Enregistrer la note';
                 }
             } catch (error) {
                 console.error('Erreur:', error);
                 showAlert('❌ Erreur lors de l\'ajout de la note', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '💾 Enregistrer la note';
             }
         });
         
         async function loadNotes() {
+            const container = document.getElementById('notesTable');
+            container.innerHTML = '<div class="loading">⏳ Chargement des notes...</div>';
+            
             try {
                 const response = await fetch('/api/notes');
-                const notes = await response.json();
                 
-                const container = document.getElementById('notesTable');
+                if (!response.ok) {
+                    throw new Error('Erreur serveur');
+                }
+                
+                const notes = await response.json();
                 
                 if (notes.length === 0) {
                     container.innerHTML = `
@@ -901,10 +955,18 @@
                 `;
                 
                 container.innerHTML = html;
+                console.log('✅ Notes chargées:', notes.length);
             } catch (error) {
-                console.error('Erreur:', error);
-                document.getElementById('notesTable').innerHTML = 
-                    '<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erreur de chargement</div>';
+                console.error('❌ Erreur de chargement des notes:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Erreur de chargement</p>
+                        <button class="btn btn-primary" onclick="loadNotes()" style="margin-top: 15px;">
+                            🔄 Réessayer
+                        </button>
+                    </div>
+                `;
             }
         }
         
